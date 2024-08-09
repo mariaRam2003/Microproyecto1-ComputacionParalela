@@ -16,24 +16,23 @@ public:
     void reproducePlants();
     void update();
     void handlePredation();
-    void moveHerbivores();
-    void moveCarnivores();
     void printGrid() const;
 
 private:
     CellType grid[GRID_SIZE][GRID_SIZE];
-    int plantProbability = 30; // Probabilidad de reproducción de plantas (en porcentaje)
-    int herbivoreReproductionThreshold = 3; // Cantidad de plantas necesarias para reproducción de herbívoros
-    int carnivoreReproductionThreshold = 5; // Cantidad de herbívoros necesarios para reproducción de carnívoros
-    int herbivoreEnergy = 2; // Energía ganada al consumir una planta
-    int carnivoreEnergy = 2; // Energía ganada al consumir un herbívoro
-    int herbivoreStarvationTicks = 3; // Cantidad de ticks sin comida antes de morir
-    int carnivoreStarvationTicks = 3; // Cantidad de ticks sin comida antes de morir
+    int plantProbability = 30;
+    int herbivoreReproductionThreshold = 3;
+    int carnivoreReproductionThreshold = 5;
+    int herbivoreEnergy = 2;
+    int carnivoreEnergy = 2;
+    int herbivoreStarvationTicks = 3;
+    int carnivoreStarvationTicks = 3;
 
-    void reproduceHerbivores();
-    void reproduceCarnivores();
+    void initializeEntities(int count, CellType entityType);
     void moveEntities(CellType entityType);
     void handleStarvation();
+    void reproduceHerbivores();
+    void reproduceCarnivores();
 };
 
 #endif // ECOSYSTEM_H

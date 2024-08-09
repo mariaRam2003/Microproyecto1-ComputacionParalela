@@ -1,23 +1,14 @@
-# imagen base de Ubuntu
-FROM ubuntu:22.04
+# Usa una imagen base de Ubuntu (o cualquier otra que prefieras)
+FROM ubuntu:latest
 
-# Instala las dependencias necesarias
-RUN apt-get update && \
-    apt-get install -y \
-    build-essential \
-    gcc \
-    g++ \
-    libomp-dev \
-    cmake
+# Instala GCC, G++, y otras herramientas necesarias
+RUN apt-get update && apt-get install -y gcc g++ make
 
-# Configura el directorio de trabajo
-WORKDIR /app
+# Crea un directorio de trabajo
+WORKDIR /usr/src/myapp
 
-# Copia el código fuente al contenedor
-COPY . /app
+# Copia el código fuente desde el host al contenedor
+COPY . /usr/src/myapp
 
-# Compila el código
-RUN g++ -O2 -fopenmp -o ecosystem_simulation main.cpp ecosystem.cpp
-
-# Comando para ejecutar el programa
-CMD ["./ecosystem_simulation"]
+# Define el comando por defecto al iniciar el contenedor
+CMD ["/bin/bash"]
