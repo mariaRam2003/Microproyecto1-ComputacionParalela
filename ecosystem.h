@@ -28,14 +28,13 @@ struct Entity {
 class Ecosystem {
 public:
     Ecosystem();
-    void initialize();
-    void reproducePlants();
-    void update();
-    void handlePredation();
+    void initialize();    
     void printGrid(int tick_no) const;
+    void simulatePlants();
 
 private:
     Entity grid[GRID_SIZE][GRID_SIZE];
+    bool chance(int probability);
     int plantProbability = 30;
     int herbivoreReproductionThreshold = 3;
     int carnivoreReproductionThreshold = 5;
@@ -45,10 +44,6 @@ private:
     int carnivoreStarvationTicks = 3;
 
     void initializeEntities(int count, CellType entityType);
-    void moveEntities(CellType entityType);
-    void handleStarvation();
-    void reproduceHerbivores();
-    void reproduceCarnivores();
 };
 
 #endif // ECOSYSTEM_H

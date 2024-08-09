@@ -19,6 +19,46 @@ void Ecosystem::initialize() {
     initializeEntities(INITIAL_CARNIVORES, CARNIVORE);
 }
 
+void Ecosystem::simulatePlants(){
+    // we check for adyacent cells to see if a plant can grow
+    // TODO: the shared grid could introduce serious overhead and cache invalidation, we should consider a better approach
+    #pragma omp parallel for collapse(2) shared(grid)
+    for (int i = 0; i < GRID_SIZE; ++i) {
+        for (int j = 0; j < GRID_SIZE; ++j) {
+
+            // if the cell is not a plant, we skip it
+            if (grid[i][j].type != PLANT) {
+                continue;
+            }
+
+            // the directions in which a plant can grow
+            int directions[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+
+            for (int k = 0; k < 4; ++k) {
+                int x = (i + directions[k][0]) % GRID_SIZE;
+                int y = (j + directions[k][1]) % GRID_SIZE;
+                
+                // if the cell is not empty, we skip it
+                if (grid[x][y].type != EMPTY) {
+                        continue;
+                }
+
+                // if the cell is empty, we check if a plant can grow
+                if (chance(plantProbability)) {
+                        Entity plant;
+                        plant.type = PLANT;
+                        grid[x][y] = plant;
+                }
+            }
+
+        }
+    }
+}
+
+bool Ecosystem::chance(int probability) {
+    return (rand() % 100) < probability;
+}
+
 
 void Ecosystem::initializeEntities(int count, CellType entityType) {
     for (;count > 0; count--) {
@@ -52,85 +92,6 @@ void Ecosystem::initializeEntities(int count, CellType entityType) {
     }
 }
 
-void Ecosystem::reproducePlants() {
-    Entity tempGrid[GRID_SIZE][GRID_SIZE];
-
-    // We need to copy the grid to a temporary grid to avoid modifying the grid while checking for reproduction
-    #pragma omp parallel for collapse(2)
-    for (int i = 0; i < GRID_SIZE; ++i) {
-        for (int j = 0; j < GRID_SIZE; ++j) {
-            tempGrid[i][j] = grid[i][j];        // if values are being copied by reference, the
-        }
-    }
-
-    // 
-    // #pragma omp parallel for collapse(2)
-    // // we iterate over the grid to check if a plant can reproduce
-    // for (int i = 0; i < GRID_SIZE; ++i) {
-    //     for (int j = 0; j < GRID_SIZE; ++j) {
-
-    //         // if the cell is a plant, we check if it can reproduce
-    //         if (grid[i][j] == PLANT) {
-    //             int reproductionChance = rand() % 100;
-    //             if (reproductionChance < plantProbability) {
-    //                 for (int di = -1; di <= 1; ++di) {
-    //                     for (int dj = -1; dj <= 1; ++dj) {
-    //                         int ni = i + di;
-    //                         int nj = j + dj;
-    //                         if (ni >= 0 && ni < GRID_SIZE && nj >= 0 && nj < GRID_SIZE && tempGrid[ni][nj] == EMPTY) {
-    //                             tempGrid[ni][nj] = PLANT;
-    //                             break;
-    //                         }
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
-
-    // TODO: access to grid should be atomic, since multiple threads are writing to it
-    #pragma omp parallel for collapse(2)
-    for (int i = 0; i < GRID_SIZE; ++i) {
-        for (int j = 0; j < GRID_SIZE; ++j) {
-            grid[i][j] = tempGrid[i][j];
-        }
-    }
-}
-
-void Ecosystem::update() {
-    moveEntities(HERBIVORE);
-    moveEntities(CARNIVORE);
-    handleStarvation();
-}
-
-void Ecosystem::moveEntities(CellType entityType) {
-    #pragma omp parallel for collapse(2)
-    for (int i = 0; i < GRID_SIZE; ++i) {
-        for (int j = 0; j < GRID_SIZE; ++j) {
-            if (grid[i][j].type == entityType) {
-                // Implementa la lógica de movimiento para la entidad
-            }
-        }
-    }
-}
-
-void Ecosystem::handlePredation() {
-    #pragma omp parallel for collapse(2)
-    for (int i = 0; i < GRID_SIZE; ++i) {
-        for (int j = 0; j < GRID_SIZE; ++j) {
-            // Implementa la caza de herbívoros por carnívoros
-        }
-    }
-}
-
-void Ecosystem::handleStarvation() {
-    #pragma omp parallel for collapse(2)
-    for (int i = 0; i < GRID_SIZE; ++i) {
-        for (int j = 0; j < GRID_SIZE; ++j) {
-            // Implementa la lógica de inanición
-        }
-    }
-}
 
 void Ecosystem::printGrid(int tick_no) const {
     std::cout << std::endl;

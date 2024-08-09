@@ -6,9 +6,7 @@ int main() {
     ecosystem.initialize();
     
     for (int tick = 0; tick < MAX_TICKS; ++tick) {
-        ecosystem.reproducePlants();
-        ecosystem.update();
-        ecosystem.handlePredation();
+        ecosystem.simulatePlants();
         ecosystem.printGrid(tick);
     }
     
