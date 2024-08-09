@@ -9,7 +9,7 @@ int main() {
         ecosystem.reproducePlants();
         ecosystem.update();
         ecosystem.handlePredation();
-        ecosystem.printGrid();
+        ecosystem.printGrid(tick);
     }
     
     return 0;
