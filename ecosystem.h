@@ -1,7 +1,7 @@
 #ifndef ECOSYSTEM_H
 #define ECOSYSTEM_H
 
-const int MAX_TICKS = 100;
+const int MAX_TICKS = 10;
 const int GRID_SIZE = 10;
 const int INITIAL_PLANTS = 30;
 const int INITIAL_HERBIVORES = 10;
@@ -31,6 +31,7 @@ public:
     void initialize();    
     void printGrid(int tick_no) const;
     void simulatePlants();
+    void simulateHerbivores();
 
 private:
     Entity grid[GRID_SIZE][GRID_SIZE];

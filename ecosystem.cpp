@@ -19,6 +19,10 @@ void Ecosystem::initialize() {
     initializeEntities(INITIAL_CARNIVORES, CARNIVORE);
 }
 
+/**
+ * @brief 
+ * 
+ */
 void Ecosystem::simulatePlants(){
     // we check for adyacent cells to see if a plant can grow
     // TODO: the shared grid could introduce serious overhead and cache invalidation, we should consider a better approach
@@ -55,6 +59,93 @@ void Ecosystem::simulatePlants(){
     }
 }
 
+
+void Ecosystem::simulateHerbivores() {
+    // we check for adyacent cells to see if a herbivore can move
+    #pragma omp parallel for collapse(2) shared(grid)
+    for (int i = 0; i < GRID_SIZE; ++i) {
+        for (int j = 0; j < GRID_SIZE; ++j) {
+
+            // if the cell is not a hervibore, we skip it
+            if (grid[i][j].type != HERBIVORE) {
+                continue;
+            }
+
+            // we check if it starved to death
+            if (grid[i][j].satisfaction == 0) {
+                Entity empty;
+                empty.type = EMPTY;
+                grid[i][j] = empty;
+                continue;
+            }
+
+            // if its youth is 0, it dies of old age
+            if (grid[i][j].youth == 0) {
+                Entity empty;
+                empty.type = EMPTY;
+                grid[i][j] = empty;
+                continue;
+            }
+
+            // we update the satisfaction and youth level
+            grid[i][j].satisfaction--;
+            grid[i][j].youth--;
+
+            // the directions in which a herbivore can move
+            // the directions in which a plant can grow
+            int directions[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+
+            bool move = false;
+            int plant[2] = {0,0}; // this tells us where the plant is relative to us 0,0 means no plant
+            bool isPlant = false;
+
+            // we check the adyacent cells
+            for (int k = 0; k < 4; ++k) {
+                int x = (i + directions[k][0]) % GRID_SIZE;
+                int y = (j + directions[k][1]) % GRID_SIZE;
+                
+                // if there is a carnivore in an adyacent cell we should move to scape
+                if (grid[x][y].type == CARNIVORE) {
+                    move = true;
+                }
+
+                if (grid[x][y].type == PLANT) {
+                    plant[0] = x;
+                    plant[1] = y;
+                    isPlant = true;
+                }
+
+        
+                if (grid[x][y].type == EMPTY) {
+                    // if theres an empty cell and we must move we move
+                    if (move) {
+                        Entity herbivore_temp = grid[i][j];
+                        grid[i][j].type = EMPTY;
+                        grid[x][y] = herbivore_temp;
+                    }else if (isPlant) {
+                        // if theres a plant and an empty cell then we reproduce
+                        grid[x][y].type = HERBIVORE;
+                        grid[x][y].satisfaction = MAX_SATISFACTION;
+                        grid[x][y].youth = 5;
+                    }else if (!isPlant) {
+                        // if theres no food then we move 
+                        Entity herbivore_temp = grid[i][j];
+                        grid[i][j].type = EMPTY;
+                        grid[x][y] = herbivore_temp;
+                    }
+                }
+
+                // if theres a plant we eat it
+                if (grid[i][j].satisfaction < grid[i][j].maxSatisfaction) {
+                    grid[i][j].satisfaction++;                            
+                }
+                grid[plant[0]][plant[1]].type = EMPTY;
+            }
+        }   
+    }
+    
+}
+
 bool Ecosystem::chance(int probability) {
     return (rand() % 100) < probability;
 }
@@ -80,13 +171,16 @@ void Ecosystem::initializeEntities(int count, CellType entityType) {
             herbivore.satisfaction = MAX_SATISFACTION;
             herbivore.youth = 5;
             herbivore.maxSatisfaction = MAX_SATISFACTION;
+            grid[x][y] = herbivore;
 
         } else if (entityType == CARNIVORE) {
             Entity carnivore;
             carnivore.type = CARNIVORE;
             carnivore.satisfaction = MAX_SATISFACTION;
             carnivore.youth = 5;
-            carnivore.maxSatisfaction = MAX_SATISFACTION;            
+            carnivore.maxSatisfaction = MAX_SATISFACTION;     
+            grid[x][y] = carnivore;
+            
         }
 
     }
