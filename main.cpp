@@ -7,6 +7,8 @@ int main() {
     
     for (int tick = 0; tick < MAX_TICKS; ++tick) {
         ecosystem.simulatePlants();
+        ecosystem.simulateHerbivores();
+        ecosystem.simulateCarnivores();
         ecosystem.printGrid(tick);
     }
     

@@ -3,7 +3,7 @@
 
 const int MAX_TICKS = 10;
 const int GRID_SIZE = 10;
-const int INITIAL_PLANTS = 30;
+const int INITIAL_PLANTS = 5;
 const int INITIAL_HERBIVORES = 10;
 const int INITIAL_CARNIVORES = 5;
 const int MAX_SATISFACTION = 5;
@@ -32,11 +32,12 @@ public:
     void printGrid(int tick_no) const;
     void simulatePlants();
     void simulateHerbivores();
+    void simulateCarnivores();
 
 private:
     Entity grid[GRID_SIZE][GRID_SIZE];
     bool chance(int probability);
-    int plantProbability = 30;
+    int plantProbability = 5;
     int herbivoreReproductionThreshold = 3;
     int carnivoreReproductionThreshold = 5;
     int herbivoreEnergy = 2;

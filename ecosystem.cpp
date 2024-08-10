@@ -54,7 +54,6 @@ void Ecosystem::simulatePlants(){
                         grid[x][y] = plant;
                 }
             }
-
         }
     }
 }
@@ -91,8 +90,7 @@ void Ecosystem::simulateHerbivores() {
             grid[i][j].satisfaction--;
             grid[i][j].youth--;
 
-            // the directions in which a herbivore can move
-            // the directions in which a plant can grow
+            // the directions in which a herbivore can move            
             int directions[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
 
             bool move = false;
@@ -114,37 +112,129 @@ void Ecosystem::simulateHerbivores() {
                     plant[1] = y;
                     isPlant = true;
                 }
+            }
 
-        
+            // we check the empty cells now
+            for (int k = 0; k < 4; ++k) {
+                int x = (i + directions[k][0]) % GRID_SIZE;
+                int y = (j + directions[k][1]) % GRID_SIZE;
+
                 if (grid[x][y].type == EMPTY) {
                     // if theres an empty cell and we must move we move
                     if (move) {
                         Entity herbivore_temp = grid[i][j];
                         grid[i][j].type = EMPTY;
                         grid[x][y] = herbivore_temp;
+                        break;
                     }else if (isPlant) {
                         // if theres a plant and an empty cell then we reproduce
                         grid[x][y].type = HERBIVORE;
                         grid[x][y].satisfaction = MAX_SATISFACTION;
                         grid[x][y].youth = 5;
+                        break;
                     }else if (!isPlant) {
                         // if theres no food then we move 
                         Entity herbivore_temp = grid[i][j];
                         grid[i][j].type = EMPTY;
                         grid[x][y] = herbivore_temp;
+                        break;
                     }
                 }
 
                 // if theres a plant we eat it
-                if (grid[i][j].satisfaction < grid[i][j].maxSatisfaction) {
+                if (grid[i][j].satisfaction < MAX_SATISFACTION) {
                     grid[i][j].satisfaction++;                            
                 }
                 grid[plant[0]][plant[1]].type = EMPTY;
+                break;
             }
         }   
     }
-    
 }
+
+void Ecosystem::simulateCarnivores(){
+    #pragma omp parallel for collapse(2) shared(grid)
+    for (int i = 0; i < GRID_SIZE; ++i) {
+        for (int j = 0; j < GRID_SIZE; ++j) {
+            
+            // if the cell is not a carnivore, we skip it
+            if (grid[i][j].type != CARNIVORE) {
+                continue;
+            }
+
+            // we check if it starved to death
+            if (grid[i][j].satisfaction == 0) {
+                Entity empty;
+                empty.type = EMPTY;
+                grid[i][j] = empty;
+                continue;
+            }
+
+            // if its youth is 0, it dies of old age
+            if (grid[i][j].youth == 0) {
+                Entity empty;
+                empty.type = EMPTY;
+                grid[i][j] = empty;
+                continue;
+            }
+
+            // we update the satisfaction and youth level
+            grid[i][j].satisfaction--;
+            grid[i][j].youth--;
+
+            // the directions in which a carnivore can move            
+            int directions[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+
+            bool isHerbivore = false;
+
+            // we check the adyacent cells
+            for (int k = 0; k < 4; ++k) {
+                int x = (i + directions[k][0]) % GRID_SIZE;
+                int y = (j + directions[k][1]) % GRID_SIZE;
+
+                if (grid[x][y].type == HERBIVORE) {
+                    isHerbivore = true;
+                    break;
+                }
+            }
+
+            for (int k = 0; k < 4; ++k){
+                int x = (i + directions[k][0]) % GRID_SIZE;
+                int y = (j + directions[k][1]) % GRID_SIZE;
+
+                // if the cell is NOT empty, we skip it
+                if (grid[x][y].type != EMPTY) {
+                    continue;
+                }
+
+                // if theres an herbivore and an empty cell then we reproduce                    
+                if (isHerbivore) {
+                    Entity newCarnivore;
+                    newCarnivore.type = CARNIVORE;
+                    newCarnivore.satisfaction = MAX_SATISFACTION;
+                    newCarnivore.youth = 5;
+                    grid[x][y] = newCarnivore;
+                    break;
+                    
+                }else if (!isHerbivore) {
+                    // if theres no food then we move 
+                    Entity carnivore_temp = grid[i][j];
+                    grid[i][j].type = EMPTY;
+                    grid[x][y] = carnivore_temp;
+                    break;
+                }
+
+                // if theres a herbivore we eat it
+                if (grid[i][j].satisfaction < MAX_SATISFACTION) {
+                    grid[i][j].satisfaction++;                            
+                }
+                grid[x][y].type = EMPTY;
+                break;
+            }
+        }
+    }
+}
+
 
 bool Ecosystem::chance(int probability) {
     return (rand() % 100) < probability;
@@ -157,7 +247,7 @@ void Ecosystem::initializeEntities(int count, CellType entityType) {
         int y = rand() % GRID_SIZE;        
 
         if (grid[x][y].type != EMPTY) {
-            continue; // if the cell is not empty, we try again
+            continue; // if the cell is NOT empty, we try again
         }        
 
         if (entityType == PLANT) {
@@ -180,7 +270,7 @@ void Ecosystem::initializeEntities(int count, CellType entityType) {
             carnivore.youth = 5;
             carnivore.maxSatisfaction = MAX_SATISFACTION;     
             grid[x][y] = carnivore;
-            
+
         }
 
     }
