@@ -20,29 +20,18 @@ struct Entity {
 class Ecosystem {
 public:
     Ecosystem();
-    void initialize();
+    void initialize();    
     void printGrid(int tick_no) const;
-<<<<<<< Updated upstream
-    void simulate();  // Simula todas las especies
-
-private:
-    Entity grid[GRID_SIZE * GRID_SIZE];
-    
-    void simulatePlants(Entity* tempGrid);
-    void simulateHerbivores(Entity* tempGrid);
-    void simulateCarnivores(Entity* tempGrid);
-=======
     void simulatePlants();
     void simulateHerbivores();
     void simulateCarnivores();
-    void mergeGrids();  // Metodo para combinar los grids temporales
+    void mergeGrids();  // Nuevo método para combinar los grids temporales
 
 private:
     Entity grid[GRID_SIZE * GRID_SIZE];
     Entity plantGrid[GRID_SIZE * GRID_SIZE];
     Entity herbivoreGrid[GRID_SIZE * GRID_SIZE];
     Entity carnivoreGrid[GRID_SIZE * GRID_SIZE];
->>>>>>> Stashed changes
 
     bool chance(int probability);
     void initializeEntities(int count, CellType entityType);
