@@ -19,5 +19,5 @@ g++ -fopenmp -o main.o *.cpp
 
 y posteriormente corremos:
 ```commandline
-/main.o
+./main.o
 ```

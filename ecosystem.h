@@ -10,14 +10,6 @@ const int MAX_SATISFACTION = 5;
 
 enum CellType { EMPTY, PLANT, HERBIVORE, CARNIVORE };
 
-/**
- * @brief Struct to represent an entity in the ecosystem i.e a plant, herbivore or carnivore
- * 
- * @param type The type of the entity i.e a plant, herbivore or carnivore
- * @param satisfaction The satisfaction level of the entity, when it reaches 0, the entity dies of starvation
- * @param youth when the youth level of the entity reaches 0, the entity dies of old age
- * @param maxSatisfaction The entity can keep eating but the satisfaction level cannot exceed this value
- */
 struct Entity {
     CellType type;
     int satisfaction;
@@ -28,22 +20,16 @@ struct Entity {
 class Ecosystem {
 public:
     Ecosystem();
-    void initialize();    
+    void initialize();
     void printGrid(int tick_no) const;
-    void simulatePlants();
-    void simulateHerbivores();
-    void simulateCarnivores();
+    void simulate();  // Simula todas las especies
 
 private:
-    Entity grid[GRID_SIZE][GRID_SIZE];
-    bool chance(int probability);
-    int plantProbability = 5;
-    int herbivoreReproductionThreshold = 3;
-    int carnivoreReproductionThreshold = 5;
-    int herbivoreEnergy = 2;
-    int carnivoreEnergy = 2;
-    int herbivoreStarvationTicks = 3;
-    int carnivoreStarvationTicks = 3;
+    Entity grid[GRID_SIZE * GRID_SIZE];
+    
+    void simulatePlants(Entity* tempGrid);
+    void simulateHerbivores(Entity* tempGrid);
+    void simulateCarnivores(Entity* tempGrid);
 
     void initializeEntities(int count, CellType entityType);
 };
