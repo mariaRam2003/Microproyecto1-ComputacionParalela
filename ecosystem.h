@@ -29,14 +29,16 @@ class Ecosystem {
 public:
     Ecosystem();
     void initialize();    
-    void printGrid(int tick_no) const;
-    void simulatePlants();
-    void simulateHerbivores();
-    void simulateCarnivores();
+    void printGrid(int tick_no);
+    Entity* simulatePlants();
+    Entity* simulateHerbivores();
+    Entity* simulateCarnivores();
 
 private:
-    Entity grid[GRID_SIZE][GRID_SIZE];
+    Entity grid[GRID_SIZE * GRID_SIZE];
+    int converter(int x, int y);
     bool chance(int probability);
+    Entity* copier(Entity* grid);
     int plantProbability = 5;
     int herbivoreReproductionThreshold = 3;
     int carnivoreReproductionThreshold = 5;

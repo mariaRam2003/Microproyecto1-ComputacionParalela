@@ -9,7 +9,7 @@ docker build -t paralela .
 
 Posteriormente para ingresar al container corremos:  
 ```commandline
-docker run -it -v $(pwd):/usr/src/ paralela bash
+docker run --rm -it -v $(pwd):/usr/src/ paralela bash
 ```
 
 Una vez dentro del container compilamos:
@@ -19,5 +19,5 @@ g++ -fopenmp -o main.o *.cpp
 
 y posteriormente corremos:
 ```commandline
-/main.o
+./main.o
 ```

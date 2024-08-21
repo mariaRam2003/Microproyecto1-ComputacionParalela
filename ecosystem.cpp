@@ -8,7 +8,7 @@ Ecosystem::Ecosystem() {
         for (int j = 0; j < GRID_SIZE; ++j) {
             Entity empty;
             empty.type = EMPTY;
-            grid[i][j] = empty;
+            grid[converter(i,j)] = empty;
         }
     }
 }
@@ -19,19 +19,42 @@ void Ecosystem::initialize() {
     initializeEntities(INITIAL_CARNIVORES, CARNIVORE);
 }
 
+int Ecosystem::converter(int x, int y){
+    return (x * GRID_SIZE) + y;
+}
+
+Entity* Ecosystem::copier(Entity* grid){
+    int grid_size = GRID_SIZE * GRID_SIZE;
+    
+    // Allocate memory for the new array of Entities
+    Entity* clonedEntities = (Entity*)malloc(grid_size * sizeof(Entity));
+    if (clonedEntities == NULL) {
+        printf("Memory allocation failed\n");
+        exit(1);
+    }
+
+    for (int i = 0; i < grid_size; i++) {
+        clonedEntities[i] = grid[i];
+    }
+
+    return clonedEntities;
+}
+
 /**
  * @brief 
  * 
  */
-void Ecosystem::simulatePlants(){
+Entity* Ecosystem::simulatePlants(){
+    Entity* gridCopy = copier(grid);
+
     // we check for adyacent cells to see if a plant can grow
     // TODO: the shared grid could introduce serious overhead and cache invalidation, we should consider a better approach
-    #pragma omp parallel for collapse(2) shared(grid)
+    #pragma omp parallel for collapse(2) shared(gridCopy)
     for (int i = 0; i < GRID_SIZE; ++i) {
         for (int j = 0; j < GRID_SIZE; ++j) {
 
             // if the cell is not a plant, we skip it
-            if (grid[i][j].type != PLANT) {
+            if (gridCopy[converter(i, j)].type != PLANT) {
                 continue;
             }
 
@@ -43,7 +66,7 @@ void Ecosystem::simulatePlants(){
                 int y = (j + directions[k][1]) % GRID_SIZE;
                 
                 // if the cell is not empty, we skip it
-                if (grid[x][y].type != EMPTY) {
+                if (gridCopy[converter(x, y)].type != EMPTY) {
                         continue;
                 }
 
@@ -51,44 +74,47 @@ void Ecosystem::simulatePlants(){
                 if (chance(plantProbability)) {
                         Entity plant;
                         plant.type = PLANT;
-                        grid[x][y] = plant;
+                        gridCopy[converter(x, y)] = plant;
                 }
             }
         }
     }
+    return gridCopy;
 }
 
 
-void Ecosystem::simulateHerbivores() {
+Entity* Ecosystem::simulateHerbivores(){
+    Entity* gridCopy = copier(grid);
+
     // we check for adyacent cells to see if a herbivore can move
     #pragma omp parallel for collapse(2) shared(grid)
     for (int i = 0; i < GRID_SIZE; ++i) {
         for (int j = 0; j < GRID_SIZE; ++j) {
 
             // if the cell is not a hervibore, we skip it
-            if (grid[i][j].type != HERBIVORE) {
+            if (gridCopy[converter(i,j)].type != HERBIVORE) {
                 continue;
             }
 
             // we check if it starved to death
-            if (grid[i][j].satisfaction == 0) {
+            if (gridCopy[converter(i,j)].satisfaction == 0) {
                 Entity empty;
                 empty.type = EMPTY;
-                grid[i][j] = empty;
+                gridCopy[converter(i,j)] = empty;
                 continue;
             }
 
             // if its youth is 0, it dies of old age
-            if (grid[i][j].youth == 0) {
+            if (gridCopy[converter(i,j)].youth == 0) {
                 Entity empty;
                 empty.type = EMPTY;
-                grid[i][j] = empty;
+                gridCopy[converter(i,j)] = empty;
                 continue;
             }
 
             // we update the satisfaction and youth level
-            grid[i][j].satisfaction--;
-            grid[i][j].youth--;
+            gridCopy[converter(i,j)].satisfaction--;
+            gridCopy[converter(i,j)].youth--;
 
             // the directions in which a herbivore can move            
             int directions[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
@@ -103,11 +129,11 @@ void Ecosystem::simulateHerbivores() {
                 int y = (j + directions[k][1]) % GRID_SIZE;
                 
                 // if there is a carnivore in an adyacent cell we should move to scape
-                if (grid[x][y].type == CARNIVORE) {
+                if (gridCopy[converter(x,y)].type == CARNIVORE) {
                     move = true;
                 }
 
-                if (grid[x][y].type == PLANT) {
+                if (gridCopy[converter(x,y)].type == PLANT) {
                     plant[0] = x;
                     plant[1] = y;
                     isPlant = true;
@@ -119,68 +145,71 @@ void Ecosystem::simulateHerbivores() {
                 int x = (i + directions[k][0]) % GRID_SIZE;
                 int y = (j + directions[k][1]) % GRID_SIZE;
 
-                if (grid[x][y].type == EMPTY) {
+                if (gridCopy[converter(x,y)].type == EMPTY) {
                     // if theres an empty cell and we must move we move
                     if (move) {
-                        Entity herbivore_temp = grid[i][j];
-                        grid[i][j].type = EMPTY;
-                        grid[x][y] = herbivore_temp;
+                        Entity herbivore_temp = grid[converter(i,j)];
+                        gridCopy[converter(i,j)].type = EMPTY;
+                        gridCopy[converter(x,y)] = herbivore_temp;
                         break;
                     }else if (isPlant) {
                         // if theres a plant and an empty cell then we reproduce
-                        grid[x][y].type = HERBIVORE;
-                        grid[x][y].satisfaction = MAX_SATISFACTION;
-                        grid[x][y].youth = 5;
+                        gridCopy[converter(x,y)].type = HERBIVORE;
+                        gridCopy[converter(x,y)].satisfaction = MAX_SATISFACTION;
+                        gridCopy[converter(x,y)].youth = 5;
                         break;
                     }else if (!isPlant) {
                         // if theres no food then we move 
-                        Entity herbivore_temp = grid[i][j];
-                        grid[i][j].type = EMPTY;
-                        grid[x][y] = herbivore_temp;
+                        Entity herbivore_temp = grid[converter(i,j)];
+                        gridCopy[converter(i,j)].type = EMPTY;
+                        gridCopy[converter(x,y)] = herbivore_temp;
                         break;
                     }
                 }
 
                 // if theres a plant we eat it
-                if (grid[i][j].satisfaction < MAX_SATISFACTION) {
-                    grid[i][j].satisfaction++;                            
+                if (gridCopy[converter(i,j)].satisfaction < MAX_SATISFACTION) {
+                    gridCopy[converter(i,j)].satisfaction++;                            
                 }
-                grid[plant[0]][plant[1]].type = EMPTY;
+                gridCopy[converter(plant[0], plant[1])].type = EMPTY;
                 break;
             }
         }   
     }
+    return gridCopy;
 }
 
-void Ecosystem::simulateCarnivores(){
+Entity* Ecosystem::simulateCarnivores(){
+    Entity* gridCopy = copier(grid);
+
     #pragma omp parallel for collapse(2) shared(grid)
     for (int i = 0; i < GRID_SIZE; ++i) {
         for (int j = 0; j < GRID_SIZE; ++j) {
             
             // if the cell is not a carnivore, we skip it
-            if (grid[i][j].type != CARNIVORE) {
+            if (gridCopy[converter(i,j)].type != CARNIVORE) {
                 continue;
             }
 
             // we check if it starved to death
-            if (grid[i][j].satisfaction == 0) {
+            if (gridCopy[converter(i,j)].satisfaction == 0) {
                 Entity empty;
                 empty.type = EMPTY;
-                grid[i][j] = empty;
+                gridCopy[converter(i,j)] = empty;
                 continue;
             }
 
             // if its youth is 0, it dies of old age
-            if (grid[i][j].youth == 0) {
+            if (gridCopy[converter(i,j)].youth == 0) {
                 Entity empty;
                 empty.type = EMPTY;
-                grid[i][j] = empty;
+                gridCopy[converter(i,j)] = empty;
                 continue;
             }
 
             // we update the satisfaction and youth level
-            grid[i][j].satisfaction--;
-            grid[i][j].youth--;
+            gridCopy[converter(i,j)].satisfaction--;
+            gridCopy[converter(i,j)].youth--;
 
             // the directions in which a carnivore can move            
             int directions[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
@@ -192,7 +221,7 @@ void Ecosystem::simulateCarnivores(){
                 int x = (i + directions[k][0]) % GRID_SIZE;
                 int y = (j + directions[k][1]) % GRID_SIZE;
 
-                if (grid[x][y].type == HERBIVORE) {
+                if (gridCopy[converter(x,y)].type == HERBIVORE) {
                     isHerbivore = true;
                     break;
                 }
@@ -203,7 +232,7 @@ void Ecosystem::simulateCarnivores(){
                 int y = (j + directions[k][1]) % GRID_SIZE;
 
                 // if the cell is NOT empty, we skip it
-                if (grid[x][y].type != EMPTY) {
+                if (gridCopy[converter(x,y)].type != EMPTY) {
                     continue;
                 }
 
@@ -213,26 +242,27 @@ void Ecosystem::simulateCarnivores(){
                     newCarnivore.type = CARNIVORE;
                     newCarnivore.satisfaction = MAX_SATISFACTION;
                     newCarnivore.youth = 5;
-                    grid[x][y] = newCarnivore;
+                    gridCopy[converter(x,y)] = newCarnivore;
                     break;
                     
                 }else if (!isHerbivore) {
                     // if theres no food then we move 
-                    Entity carnivore_temp = grid[i][j];
-                    grid[i][j].type = EMPTY;
-                    grid[x][y] = carnivore_temp;
+                    Entity carnivore_temp = grid[converter(i,j)];
+                    gridCopy[converter(i,j)].type = EMPTY;
+                    gridCopy[converter(x,y)] = carnivore_temp;
                     break;
                 }
 
                 // if theres a herbivore we eat it
-                if (grid[i][j].satisfaction < MAX_SATISFACTION) {
-                    grid[i][j].satisfaction++;                            
+                if (gridCopy[converter(i,j)].satisfaction < MAX_SATISFACTION) {
+                    gridCopy[converter(i,j)].satisfaction++;                            
                 }
-                grid[x][y].type = EMPTY;
+                gridCopy[converter(x,y)].type = EMPTY;
                 break;
             }
         }
     }
+    return gridCopy;
 }
 
 
@@ -246,14 +276,14 @@ void Ecosystem::initializeEntities(int count, CellType entityType) {
         int x = rand() % GRID_SIZE;
         int y = rand() % GRID_SIZE;        
 
-        if (grid[x][y].type != EMPTY) {
+        if (grid[converter(x,y)].type != EMPTY) {
             continue; // if the cell is NOT empty, we try again
         }        
 
         if (entityType == PLANT) {
             Entity plant;
             plant.type = PLANT;
-            grid[x][y] = plant;
+            grid[converter(x,y)] = plant;
 
         } else if (entityType == HERBIVORE) {
             Entity herbivore;
@@ -261,7 +291,7 @@ void Ecosystem::initializeEntities(int count, CellType entityType) {
             herbivore.satisfaction = MAX_SATISFACTION;
             herbivore.youth = 5;
             herbivore.maxSatisfaction = MAX_SATISFACTION;
-            grid[x][y] = herbivore;
+            grid[converter(x,y)] = herbivore;
 
         } else if (entityType == CARNIVORE) {
             Entity carnivore;
@@ -269,24 +299,23 @@ void Ecosystem::initializeEntities(int count, CellType entityType) {
             carnivore.satisfaction = MAX_SATISFACTION;
             carnivore.youth = 5;
             carnivore.maxSatisfaction = MAX_SATISFACTION;     
-            grid[x][y] = carnivore;
+            grid[converter(x,y)] = carnivore;
 
         }
-
     }
 }
 
 
-void Ecosystem::printGrid(int tick_no) const {
+void Ecosystem::printGrid(int tick_no) {
     std::cout << std::endl;
     std::cout << "Tick " << tick_no << std::endl;
 
     for (int i = 0; i < GRID_SIZE; ++i) {
         for (int j = 0; j < GRID_SIZE; ++j) {
-            switch (grid[i][j].type) {
-                case PLANT: std::cout << "P "; break;
-                case HERBIVORE: std::cout << "H "; break;
-                case CARNIVORE: std::cout << "C "; break;
+            switch (grid[converter(i,j)].type) {
+                case PLANT: std::cout << "🌿 "; break;
+                case HERBIVORE: std::cout << "🐨 "; break;
+                case CARNIVORE: std::cout << "🦁 "; break;
                 default: std::cout << ". "; break;
             }
         }
