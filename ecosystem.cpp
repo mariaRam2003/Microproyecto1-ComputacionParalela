@@ -40,6 +40,29 @@ Entity* Ecosystem::copier(Entity* grid){
     return clonedEntities;
 }
 
+void Ecosystem::mergeGrids(Entity* plants, Entity* herbivores, Entity* carnivores){
+    Entity* grids[3] = {plants, herbivores, carnivores};    
+
+    for(int i = 0; i < GRID_SIZE; i++){
+        for(int j = 0; j < GRID_SIZE; j++){
+            CellType max = EMPTY;
+            int maxIdx = -1;            
+
+            // we check the cell with the greatest precedence on the food chain
+            for (int gridId = 0; gridId < 3; gridId++){
+                Entity actual_cell = grids[gridId][converter(i,j)];
+                
+                if (actual_cell.type >= max){
+                    max = actual_cell.type;
+                    maxIdx = gridId;
+                }
+            }
+
+            grid[converter(i,j)] = grids[maxIdx][converter(i,j)];
+        }
+    }    
+}
+
 /**
  * @brief 
  * 
@@ -289,7 +312,7 @@ void Ecosystem::initializeEntities(int count, CellType entityType) {
             Entity herbivore;
             herbivore.type = HERBIVORE;
             herbivore.satisfaction = MAX_SATISFACTION;
-            herbivore.youth = 5;
+            herbivore.youth = 3;
             herbivore.maxSatisfaction = MAX_SATISFACTION;
             grid[converter(x,y)] = herbivore;
 
@@ -297,7 +320,7 @@ void Ecosystem::initializeEntities(int count, CellType entityType) {
             Entity carnivore;
             carnivore.type = CARNIVORE;
             carnivore.satisfaction = MAX_SATISFACTION;
-            carnivore.youth = 5;
+            carnivore.youth = 3;
             carnivore.maxSatisfaction = MAX_SATISFACTION;     
             grid[converter(x,y)] = carnivore;
 

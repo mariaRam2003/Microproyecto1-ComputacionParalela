@@ -1,7 +1,7 @@
 #ifndef ECOSYSTEM_H
 #define ECOSYSTEM_H
 
-const int MAX_TICKS = 10;
+const int MAX_TICKS = 1000;
 const int GRID_SIZE = 10;
 const int INITIAL_PLANTS = 5;
 const int INITIAL_HERBIVORES = 10;
@@ -33,13 +33,14 @@ public:
     Entity* simulatePlants();
     Entity* simulateHerbivores();
     Entity* simulateCarnivores();
+    void mergeGrids(Entity* plants, Entity* herbivores, Entity* carnivores);
 
 private:
     Entity grid[GRID_SIZE * GRID_SIZE];
     int converter(int x, int y);
     bool chance(int probability);
     Entity* copier(Entity* grid);
-    int plantProbability = 5;
+    int plantProbability = 15;
     int herbivoreReproductionThreshold = 3;
     int carnivoreReproductionThreshold = 5;
     int herbivoreEnergy = 2;

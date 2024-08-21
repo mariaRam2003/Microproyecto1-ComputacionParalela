@@ -6,9 +6,10 @@ int main() {
     ecosystem.initialize();
     
     for (int tick = 0; tick < MAX_TICKS; ++tick) {
-        ecosystem.simulatePlants();
-        ecosystem.simulateHerbivores();
-        ecosystem.simulateCarnivores();
+        Entity* plants = ecosystem.simulatePlants();
+        Entity* herbivores = ecosystem.simulateHerbivores();
+        Entity* carnivores = ecosystem.simulateCarnivores();
+        ecosystem.mergeGrids(plants, herbivores, carnivores);
         ecosystem.printGrid(tick);
     }
     
